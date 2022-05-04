@@ -1,0 +1,16 @@
+<resources>
+
+    <style name="Widget.Theme.Sudoku.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/black_overlay</item>
+    </style>
+
+    <style name="Widget.Theme.Sudoku.ButtonBar.Fullscreen" parent="">
+        <item name="android:background">#40c4ff</item>
+        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
+    </style>
+
+    <style name="Theme.Sudoku.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+</resources>
