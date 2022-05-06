@@ -1,11 +1,15 @@
 package com.example.sudoku.database
 
+import com.example.sudoku.database.entity.GameState
 import com.example.sudoku.model.data.TableType
 import com.example.sudoku.model.data.Table
 
 object DBConnector : DatabaseRepository {
     private val dbimpl by lazy { DatabaseRepositoryImpl() }
     private var localDB = mutableListOf<Table>()
+
+    init {
+    }
 
     override fun getTable(tableType: TableType): Table {
         /*
@@ -27,42 +31,32 @@ object DBConnector : DatabaseRepository {
         return localDB.filter {
             when (tableType) {
                 TableType.NORMAL -> {
-                    it.getRefence().startsWith("N_")
+                    it.reference.startsWith("N_")
                 }
                 TableType.DIAGONAL -> {
-                    it.getRefence().startsWith("D_")
+                    it.reference.startsWith("D_")
                 }
             }
         }.random()
 
-    }
 
-    fun hasSaved(): Boolean {
-        localDB.forEach {
-            if (it.getRefence() == "saved") {
-                return true
-            }
-        }
-        return false
     }
-
-    private val saved: Table
-        get() {
-            return localDB.filter {
-                it.getRefence().startsWith("saved")
-            }.random()
-        }
 
     override fun insertTable(item: Table) {
         dbimpl.insertTable(item)
     }
 
-    /*
-    fun getNextIdNumber(): Int {
-        return 0
+    override fun loadGameState(): GameState? {
+        return dbimpl.loadGameState()
     }
 
-     */
+    override fun saveGameState(gameState: GameState) {
+        dbimpl.saveGameState(gameState)
+    }
+
+    override fun deleteGameState() {
+        dbimpl.deleteGameState()
+    }
 
     //TODO Firebase
 }

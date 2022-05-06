@@ -1,4 +1,4 @@
-package com.example.sudoku.database.tableitem
+package com.example.sudoku.database.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

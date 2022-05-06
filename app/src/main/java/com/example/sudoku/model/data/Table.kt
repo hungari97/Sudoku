@@ -3,24 +3,27 @@ package com.example.sudoku.model.data
 import com.example.sudoku.utility.*
 
 open class Table(
-    private val solutionArray: IntArray, open var givenNumbers: BooleanArray,
-    private val referenceID: String = "N_0_"
+    val reference: String = "N_0_",
+    var cells: Array<Array<Cell>>
 ) {
-    var cells: Array<Array<Cell>> = Array(9) { rowIndex ->
-        Array(9) { columnIndex ->
-            Cell(
-                solutionNumber = solutionArray[rowIndex * 9 + columnIndex],
-                given = givenNumbers[rowIndex * 9 + columnIndex]
-            )
-        }
-    }
-
-
-    init {
+    constructor(
+        reference: String = "N_0_",
+        solutionArray: IntArray,
+        givenNumbers: BooleanArray
+    ) : this(
+        reference,
+        Array(9) { rowIndex ->
+            Array(9) { columnIndex ->
+                Cell(
+                    solutionNumber = solutionArray[rowIndex * 9 + columnIndex],
+                    given = givenNumbers[rowIndex * 9 + columnIndex]
+                )
+            }
+        }) {
         initializeTable()
     }
 
-    internal open fun initializeTable() {
+    private fun initializeTable() {
         cells.forEachCellIndexed { rowIndex, columnIndex, cell ->
             if (cell.checkChosenNumber()) {
                 removeTipsPossibilities(
@@ -119,14 +122,6 @@ open class Table(
                 cell.shownPossibilities[index] = value
             }
         }
-    }
-
-    fun getRefence(): String {
-        return referenceID
-    }
-
-    internal fun getSolutionArray(): IntArray {
-        return solutionArray
     }
 
 }

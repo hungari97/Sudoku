@@ -5,7 +5,6 @@ class Cell(val solutionNumber: Int, val given: Boolean) {
     var shownPossibilities = BooleanArray(9) { false }
     var chosenNumber: Int = 0
         set(value) {
-            println("set chosenNumber $given ${checkChosenNumber()}")
             if ((!given && !checkChosenNumber()) || (given && field == 0)) {
                 field = value
             }

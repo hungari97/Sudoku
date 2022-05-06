@@ -2,18 +2,16 @@ package com.example.sudoku.database
 
 import androidx.annotation.WorkerThread
 import com.example.sudoku.SudokuApp
-import com.example.sudoku.database.tableitem.TableItem
+import com.example.sudoku.database.entity.GameState
+import com.example.sudoku.database.entity.TableItem
 import com.example.sudoku.model.data.TableType
 import com.example.sudoku.model.data.Table
 import com.example.sudoku.utility.forEachCell
 
 class DatabaseRepositoryImpl : DatabaseRepository {
-    private val db = (SudokuApp).database
+    private val database = (SudokuApp).database
 
     init {
-        /*  if (getAllTable().isEmpty()) {
-              dbInitialise()
-          }*/
         getAllTable().forEach { delete(it) }
         dbInitialise()
 
@@ -28,56 +26,98 @@ class DatabaseRepositoryImpl : DatabaseRepository {
         return Table(
             solutionArray = temp.slice(0 until 81).toIntArray(),
             givenNumbers = temp.slice(81 until 162).map { it > 0 }.toBooleanArray(),
-            referenceID = reference
+            reference = reference
         )
     }
 
     @WorkerThread
     override fun getTable(tableType: TableType): Table {
-        val data = db.tableDao().getTableByNum("N_0_")
+        val data = database.tableDao().getTableByNum("N_0_")
         return decodeTable(data.tableArray, data.referenceNumber)
 
     }
 
-    fun delete(item: Table) {
+    fun delete(record: Table) {
         val data = StringBuilder()
-        item.cells.forEachCell { cell ->
+        record.cells.forEachCell { cell ->
             data.append(cell.solutionNumber)
         }
 
-        item.givenNumbers.forEach {
-            if (it) {
+        record.cells.forEachCell {
+            if (it.given) {
                 data.append(2)
             } else {
                 data.append(0)
             }
         }
-        val bditem = TableItem(0, item.getRefence(), data.toString())
-        db.tableDao().deleteTable(bditem)
+        val dbRecord = TableItem(0, record.reference, data.toString())
+        database.tableDao().deleteTable(dbRecord)
     }
 
     @WorkerThread
     override fun insertTable(item: Table) {
-        val data = StringBuilder()
-        item.cells.forEachCell { cell ->
-            data.append(cell.solutionNumber)
-        }
-        item.givenNumbers.forEach {
-            if (it) {
-                data.append(2)
-            } else {
-                data.append(0)
+        val data = buildString {
+            item.cells.forEachCell { cell ->
+                append(cell.solutionNumber)
             }
-        }
-        val bditem = TableItem(0, item.getRefence(), data.toString())
+            item.cells.forEachCell {
+                if (it.given) {
+                    append(2)
+                } else {
+                    append(0)
+                }
+            }
 
-        db.tableDao().insertItem(bditem)
+        }
+
+        val bditem = TableItem(0, item.reference, data)
+
+        database.tableDao().insertItem(bditem)
+    }
+
+    override fun loadGameState(): GameState? {
+        return database.gameStateDao().getAll()
+            .firstOrNull()
+            ?.apply {
+                val t = database.tableStateDao().getByGameStateId(id)
+                table = t
+                table?.apply {
+                    cells = database.cellStateDao()
+                        .getByTableStateId(id)
+                        .toTypedArray()
+                }
+            }
+    }
+
+    override fun saveGameState(gameState: GameState) {
+        deleteGameState()
+        database.gameStateDao().insert(gameState)
+        database.tableStateDao().insert(gameState.table!!)
+        gameState.table!!.cells!!.forEach {
+            database.cellStateDao().insert(it)
+        }
+    }
+
+    override fun deleteGameState() {
+        with(database) {
+            gameStateDao().getAll()
+                .forEach { gameState ->
+                    val tableState = tableStateDao().getByGameStateId(gameState.id)
+                    tableState?.let {
+                        cellStateDao()
+                            .getByTableStateId(tableState.id)
+                            .forEach { cellStateDao().delete(it) }
+                        tableStateDao().delete(tableState)
+                    }
+                    gameStateDao().delete(gameState)
+                }
+        }
     }
 
     @Suppress("RedundantSuspendModifier")
     @WorkerThread
     fun getAllTable(): List<Table> {
-        return db.tableDao().getAll()
+        return database.tableDao().getAll()
             .map { data ->
                 decodeTable(data.tableArray, data.referenceNumber)
             }
@@ -100,6 +140,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
 
         tables.add(
             Table(
+                "N_1_",
                 intArrayOf(
                     7, 2, 5, 1, 9, 6, 4, 8, 3,
                     4, 6, 3, 2, 8, 5, 9, 7, 1,
@@ -112,7 +153,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
                     2, 5, 7, 4, 3, 9, 6, 1, 8
                 ), BooleanArray(81) {
                     givenN.contains(it)
-                }, "N_1_"
+                }
             )
         )
 
@@ -129,6 +170,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
         )
         tables.add(
             Table(
+                "N_2_",
                 intArrayOf(
                     3, 8, 6, 1, 5, 2, 4, 9, 7,
                     2, 5, 7, 3, 4, 9, 6, 1, 8,
@@ -141,7 +183,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
                     8, 4, 9, 7, 2, 3, 1, 5, 6
                 ), BooleanArray(81) {
                     givenN.contains(it)
-                }, "N_2_"
+                }
             )
         )
 
@@ -158,6 +200,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
         )
         tables.add(
             Table(
+                "D_1_",
                 intArrayOf(
                     2, 5, 4, 8, 1, 7, 9, 3, 6,
                     8, 6, 3, 4, 9, 2, 7, 1, 5,
@@ -168,9 +211,10 @@ class DatabaseRepositoryImpl : DatabaseRepository {
                     6, 9, 2, 7, 3, 5, 4, 8, 1,
                     3, 4, 1, 2, 8, 6, 5, 9, 7,
                     7, 8, 5, 9, 4, 1, 2, 6, 3
-                ), BooleanArray(81) {
+                ),
+                BooleanArray(81) {
                     givenN.contains(it)
-                }, "D_1_"
+                },
             )
         )
 
@@ -186,6 +230,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
         )
         tables.add(
             Table(
+                "D_2_",
                 intArrayOf(
                     5, 7, 4, 2, 9, 6, 8, 1, 3,
                     6, 9, 8, 7, 1, 3, 4, 2, 5,
@@ -198,7 +243,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
                     7, 1, 5, 3, 2, 4, 9, 6, 8
                 ), BooleanArray(81) {
                     givenN.contains(it)
-                }, "D_2_"
+                }
             )
         )
         tables.forEach { tab ->

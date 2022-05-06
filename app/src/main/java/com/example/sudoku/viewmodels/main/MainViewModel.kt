@@ -11,19 +11,59 @@ import com.example.sudoku.utility.get
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.*
 
 class MainViewModel(private val tableRepository: TableRepository) : ViewModel() {
-    private val tables = MutableLiveData<Table>()
+    private val tableMutable = MutableLiveData<Table>()
+    private val countMutable = MutableLiveData(0)
     private var giveAnswer = false
     private var pencil = false
     private var delete = false
-    private var giveAnswerCount = 3
+    private var remainingHelpCount = 3
+    private lateinit var timer: Timer
 
-    val currentTable: LiveData<Table>
-        get() = tables
+    val table: LiveData<Table>
+        get() = tableMutable
+    val count: LiveData<Int>
+        get() = countMutable
+
+    fun cancelTimer() {
+        timer.cancel()
+    }
+
+    fun startTimeCounter() {
+        timer = Timer()
+        countMutable.value = 0
+        timer.scheduleAtFixedRate(object : TimerTask() {
+            override fun run() {
+                viewModelScope.launch {
+                    countMutable.value = countMutable.value!! + 1
+                }
+            }
+        }, 1000, 1000)
+    }
+
+    fun saveGameState() {
+        CoroutineScope(Dispatchers.IO).launch {
+            tableRepository.saveGame(tableMutable.value!!, remainingHelpCount, count.value!!)
+        }
+    }
+
+    fun loadGameState() {
+        CoroutineScope(Dispatchers.IO).launch {
+            tableRepository.loadGameOrNull()?.let {
+                val (helpCount, secondsPassed, table) = it
+                remainingHelpCount = helpCount
+                viewModelScope.launch {
+                    countMutable.value = secondsPassed
+                    tableMutable.value = table
+                }
+            }
+        }
+    }
 
     fun isTableFinished(): Boolean {
-        return currentTable.value!!.isFinished()
+        return table.value!!.isFinished()
     }
 
     fun isDelete(): Boolean {
@@ -47,33 +87,36 @@ class MainViewModel(private val tableRepository: TableRepository) : ViewModel() 
     }
 
     fun showAllPossibilities() {
-        tables.value?.showAllPossibilities()
+        tableMutable.value?.showAllPossibilities()
         updateTable()
     }
 
     fun hideNumber(row: Int, column: Int) {
-        tables.value!!.cells[row, column].hideNumbers()
+        tableMutable.value!!.cells[row, column].hideNumbers()
         updateTable()
     }
 
-    fun givenNumber(index: Int): Boolean {
-        return tables.value!!.givenNumbers[index].also { updateTable() }
+    fun givenNumber(row: Int, column: Int): Boolean {
+        return tableMutable.value!!
+            .cells[row, column]
+            .given
+            .also { updateTable() }
     }
 
     fun writeAnswer(index: Pair<Int, Int>, number: Int) {
         giveAnswer = false
 
         if (pencil) {
-            tables.value!!.writeTip(index, number)
+            tableMutable.value!!.writeTip(index, number)
         } else {
-            tables.value!!.writeAnswer(index, number)
+            tableMutable.value!!.writeAnswer(index, number)
         }
 
         updateTable()
     }
 
     private fun updateTable() {
-        tables.value = tables.value
+        tableMutable.value = tableMutable.value
     }
 
     fun askPossibleTip() {
@@ -82,9 +125,9 @@ class MainViewModel(private val tableRepository: TableRepository) : ViewModel() 
 
     fun givePossibleTip(pair: Pair<Int, Int>) {
         giveAnswer = false
-        if (giveAnswerCount > 0) {
-            --giveAnswerCount
-            tables.value!!.cells[pair].givePossibility()
+        if (remainingHelpCount > 0) {
+            --remainingHelpCount
+            tableMutable.value!!.cells[pair].givePossibility()
         }
         updateTable()
     }
@@ -92,5 +135,5 @@ class MainViewModel(private val tableRepository: TableRepository) : ViewModel() 
     fun getInitialiseTable(mode: TableType) =
         CoroutineScope(Dispatchers.IO).launch { setTable(tableRepository.getTable(mode)) }
 
-    private fun setTable(table: Table) = viewModelScope.launch { tables.value = table }
+    private fun setTable(table: Table) = viewModelScope.launch { tableMutable.value = table }
 }

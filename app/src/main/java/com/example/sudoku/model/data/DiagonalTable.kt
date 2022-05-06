@@ -2,20 +2,21 @@ package com.example.sudoku.model.data
 
 import com.example.sudoku.utility.forEachCellIndexed
 
-class DiagonalTable constructor(
-    private val solutionArray: IntArray, givenNumbers: BooleanArray,
-    private val referenceID: String = "D_0_"
-) : Table(solutionArray, givenNumbers) {
+class DiagonalTable : Table {
 
-    /*constructor(table: Table) :this(table){
-        this.solutionArray=table.getSolutionArray()
-        givenNumbers =table.givenNumbers
-        referenceID = table.getRefence()
-    }*/
+    constructor(
+        reference: String = "D_0_",
+        cells: Array<Array<Cell>>
+    ) : super(reference, cells)
 
-    override fun initializeTable() {
-
-    }
+    constructor(
+        reference: String = "D_0_",
+        solutionArray: IntArray,
+        givenNumbers: BooleanArray
+    ) : super(
+        reference,
+        solutionArray,
+        givenNumbers)
 
     override fun removeTipsPossibilities(place: Pair<Int, Int>, number: Int, correct: Boolean) {
         super.removeTipsPossibilities(place, number, correct)

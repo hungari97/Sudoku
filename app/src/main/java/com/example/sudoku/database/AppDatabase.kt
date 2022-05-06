@@ -4,14 +4,25 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.sudoku.database.tableitem.TableDao
-import com.example.sudoku.database.tableitem.TableItem
+import com.example.sudoku.database.dao.CellStateDao
+import com.example.sudoku.database.dao.GameStateDao
+import com.example.sudoku.database.dao.TableDao
+import com.example.sudoku.database.dao.TableStateDao
+import com.example.sudoku.database.entity.CellState
+import com.example.sudoku.database.entity.GameState
+import com.example.sudoku.database.entity.TableItem
+import com.example.sudoku.database.entity.TableState
 
-@Database(entities = [TableItem::class], version = 1)
-//@TypeConverters(Converters::class)
+@Database(
+    entities = [TableItem::class, GameState::class, TableState::class, CellState::class],
+    version = 1
+)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun tableDao(): TableDao
+    abstract fun gameStateDao(): GameStateDao
+    abstract fun tableStateDao(): TableStateDao
+    abstract fun cellStateDao(): CellStateDao
 
     companion object {
         private var instance //only one interface

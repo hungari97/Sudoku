@@ -1,16 +1,94 @@
 package com.example.sudoku.model.data
 
 import com.example.sudoku.database.DBConnector
+import com.example.sudoku.database.entity.CellState
+import com.example.sudoku.database.entity.GameState
+import com.example.sudoku.database.entity.TableState
 import kotlin.random.Random
 
 class ModelData {
     private lateinit var table: Table
 
     fun getTable(tableType: TableType): Table {
-       table=DBConnector.getTable(tableType)
+        table = DBConnector.getTable(tableType)
         return table
     }
 
+    private fun BooleanArray.encode(): String {
+        return buildString {
+            this@encode.forEach {
+                append(if (it) 1 else 0)
+            }
+        }
+    }
+
+    fun saveGameState(table: Table, remainingHelpCount: Int, secondsPassed: Int) {
+        val gameState =
+            GameState(remainingHelpCount = remainingHelpCount, secondsPassed = secondsPassed)
+        val tableState = TableState(reference = table.reference)
+        tableState.cells = table.cells
+            .flatten()
+            .map {
+                CellState(
+                    solutionNumber = it.solutionNumber,
+                    given = it.given,
+                    allPossibilitiesEncoded = it.allPossibilities.encode(),
+                    shownPossibilitiesEncoded = it.shownPossibilities.encode(),
+                    chosenNumber = it.chosenNumber
+                )
+            }
+            .toTypedArray()
+        gameState.table = tableState
+        DBConnector.saveGameState(gameState)
+    }
+
+    private fun String.decodeAsBooleanArray(): BooleanArray {
+        return toCharArray()
+            .map { it == '1' }
+            .toBooleanArray()
+    }
+
+    fun loadGameStateOrNull(): GameStateDto? {
+        val gameState = DBConnector.loadGameState() ?: return null
+        val cells = gameState.table!!.cells!!
+            .toList()
+            .chunked(9)
+            .map { cellRow ->
+                cellRow.map { cellState ->
+                    Cell(
+                        solutionNumber = cellState.solutionNumber,
+                        given = cellState.given
+                    ).apply {
+                        chosenNumber = cellState.chosenNumber
+                        allPossibilities = cellState
+                            .allPossibilitiesEncoded
+                            .decodeAsBooleanArray()
+                        shownPossibilities = cellState
+                            .shownPossibilitiesEncoded
+                            .decodeAsBooleanArray()
+                    }
+                }.toTypedArray()
+            }.toTypedArray()
+        val reference = gameState.table!!.reference
+        val table: Table = when {
+            reference.startsWith("N_") ->
+                Table(
+                    reference,
+                    cells
+                )
+            else ->
+                DiagonalTable(
+                    reference,
+                    cells
+                )
+        }
+        return GameStateDto(
+            gameState.remainingHelpCount,
+            gameState.secondsPassed,
+            table
+        )
+    }
+    /*
     fun generateNewTable(): Table {
         repeat(6) { switchRandomBoxColumns() }
         repeat(6) { switchRandomBoxLines() }
@@ -18,21 +96,18 @@ class ModelData {
         repeat(18) { switchRandomLines() }
         return table
     }
+    */
 
     private fun switchRandomLines() {
         val boxLineIndex = Random.nextInt(3)
         val lineIndexes = arrayOf(Random.nextInt(3), Random.nextInt(2))
         if (lineIndexes[0] == lineIndexes[1])
             lineIndexes[1] = (lineIndexes[1] + 1) % 3
-        (0..8).forEach { columnIndex ->
-            val tmp = table.cells[boxLineIndex * 3 + lineIndexes[0]][columnIndex]
-            table.cells[boxLineIndex * 3 + lineIndexes[0]][columnIndex] =
-                table.cells[boxLineIndex * 3 + lineIndexes[1]][columnIndex]
-            table.cells[boxLineIndex * 3 + lineIndexes[1]][columnIndex] = tmp
-            val givenTmp = table.givenNumbers[(boxLineIndex * 3 + lineIndexes[0]) * 9 + columnIndex]
-            table.givenNumbers[(boxLineIndex * 3 + lineIndexes[0]) * 9 + columnIndex] =
-                table.givenNumbers[(boxLineIndex * 3 + lineIndexes[1]) * 9 + columnIndex]
-            table.givenNumbers[(boxLineIndex * 3 + lineIndexes[1]) * 9 + columnIndex] = givenTmp
+        (0..8).forEach { index ->
+            val tmp = table.cells[boxLineIndex * 3 + lineIndexes[0]][index]
+            table.cells[boxLineIndex * 3 + lineIndexes[0]][index] =
+                table.cells[boxLineIndex * 3 + lineIndexes[1]][index]
+            table.cells[boxLineIndex * 3 + lineIndexes[1]][index] = tmp
         }
     }
 
@@ -46,11 +121,6 @@ class ModelData {
             table.cells[lineIndex][boxColumnIndex * 3 + columnIndexes[0]] =
                 table.cells[lineIndex][boxColumnIndex * 3 + columnIndexes[1]]
             table.cells[lineIndex][boxColumnIndex * 3 + columnIndexes[1]] = tmp
-
-            val givenTmp = table.givenNumbers[lineIndex * 9 + boxColumnIndex * 3 + columnIndexes[0]]
-            table.givenNumbers[lineIndex * 9 + boxColumnIndex * 3 + columnIndexes[0]] =
-                table.givenNumbers[lineIndex * 9 + boxColumnIndex * 3 + columnIndexes[1]]
-            table.givenNumbers[lineIndex * 9 + boxColumnIndex * 3 + columnIndexes[1]] = givenTmp
         }
     }
 
@@ -64,12 +134,6 @@ class ModelData {
                 table.cells[boxLineIndexes[0] * 3 + lineIndex][columnIndex] =
                     table.cells[boxLineIndexes[1] * 3 + lineIndex][columnIndex]
                 table.cells[boxLineIndexes[1] * 3 + lineIndex][columnIndex] = tmp
-
-                val givenTmp =
-                    table.givenNumbers[(boxLineIndexes[0] * 3 + lineIndex) * 9 + columnIndex]
-                table.givenNumbers[(boxLineIndexes[0] * 3 + lineIndex) * 9 + columnIndex] =
-                    table.givenNumbers[(boxLineIndexes[1] * 3 + lineIndex) * 9 + columnIndex]
-                table.givenNumbers[(boxLineIndexes[1] * 3 + lineIndex) * 9 + columnIndex] = givenTmp
             }
         }
     }
@@ -84,12 +148,6 @@ class ModelData {
                 table.cells[lineIndex][boxColumnIndexes[0] * 3 + columnIndex] =
                     table.cells[lineIndex][boxColumnIndexes[1] * 3 + columnIndex]
                 table.cells[lineIndex][boxColumnIndexes[1] * 3 + columnIndex] = tmp
-
-                val givenTmp =
-                    table.givenNumbers[lineIndex * 9 + boxColumnIndexes[0] * 3 + columnIndex]
-                table.givenNumbers[lineIndex * 9 + boxColumnIndexes[0] * 3 + columnIndex] =
-                    table.givenNumbers[lineIndex * 9 + boxColumnIndexes[1] * 3 + columnIndex]
-                table.givenNumbers[lineIndex * 9 + boxColumnIndexes[1] * 3 + columnIndex] = givenTmp
             }
         }
     }

@@ -19,13 +19,6 @@ class MainMenuActivity : AppCompatActivity() {
         btContinue.setOnClickListener { onContinueButtonClicked() }
 
         btCreate.setOnClickListener { onCreateButtonClicked() }
-
-        btContinue.visibility = if (DBConnector.hasSaved()) {
-            View.VISIBLE
-        } else {
-            View.INVISIBLE
-        }
-
     }
 
     private fun onPlayButtonClicked() {
@@ -56,7 +49,6 @@ class MainMenuActivity : AppCompatActivity() {
             this,
             TableActivity::class.java
         )
-        TODO("LOAD LAST TABLE TYPE IF EXISTS")
         startActivity(intent)
     }
 

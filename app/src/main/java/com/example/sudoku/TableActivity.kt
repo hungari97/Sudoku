@@ -3,6 +3,7 @@ package com.example.sudoku
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -25,11 +26,10 @@ import javax.inject.Inject
 class TableActivity : AppCompatActivity() {
     private var onFocusButton = BooleanArray(9) { false }
     private lateinit var viewCellTable: Array<Array<View>>
-    private lateinit var tableType: TableType
+    private var tableType: TableType? = null
+    private var isFinished = false
 
     private lateinit var viewModel: MainViewModel
-
-    private lateinit var timer: Timer
 
     @Inject
     lateinit var factory: MainViewModelFactory
@@ -38,12 +38,6 @@ class TableActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         component.inject(this)
-
-        tableType = if (intent.getStringExtra("tableType").isNullOrEmpty()) {
-            TableType.NORMAL
-        } else {
-            TableType.valueOf(intent.getStringExtra("tableType")!!)
-        }
 
         viewModel = ViewModelProviders.of(this, factory).get(MainViewModel::class.java)
 
@@ -149,13 +143,14 @@ class TableActivity : AppCompatActivity() {
             )
         )
 
-        initializeTableCellsListeners()
-        buttonsInitialize()
+        tableType = if (intent.getStringExtra("tableType").isNullOrEmpty()) {
+            null
+        } else {
+            TableType.valueOf(intent.getStringExtra("tableType")!!)
+        }
 
-        viewModel.getInitialiseTable(tableType)
 
-
-        viewModel.currentTable.observe(this) { table ->
+        viewModel.table.observe(this) { table ->
             viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
                 val cellData = table.cells[rowIndex, columnIndex]
                 displayCellData(cellView, cellData)
@@ -164,25 +159,44 @@ class TableActivity : AppCompatActivity() {
                 endTable()
             }
         }
+        if (tableType != null) {
+            viewModel.getInitialiseTable(tableType!!)
+            initializeTableCellsListeners()
+            buttonsInitialize()
+        } else {
+            viewModel.table.observe(this){
+                tableType = when {
+                    it.reference.startsWith("N_") -> TableType.NORMAL
+                    else -> TableType.DIAGONAL
+                }
+                initializeTableCellsListeners()
+                buttonsInitialize()
+            }
+            viewModel.loadGameState()
+        }
+
+
         startTimeCounter()
     }
 
     override fun onDestroy() {
-        timer.cancel()
+        viewModel.cancelTimer()
+        println("DESTROYED")
+        if (!isFinished) {
+            viewModel.saveGameState()
+            println("SAVED")
+        }
         super.onDestroy()
     }
 
     private fun endTable() {
-        val intent = Intent(
-            this,
-            MainMenuActivity::class.java
-        )
+        isFinished = true
         // setup the alert builder
         val dialog = AlertDialog.Builder(this)
             .setTitle("Congratulations!")
             .setMessage("You did it!")
             .setPositiveButton("Menu") { _, _ ->
-                startActivity(intent)
+                finish()
             }
             .create()
 
@@ -327,7 +341,7 @@ class TableActivity : AppCompatActivity() {
 
         viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
             cellView.setOnClickListener {
-                if (!viewModel.givenNumber(rowIndex * 9 + columnIndex)) {
+                if (!viewModel.givenNumber(rowIndex, columnIndex)) {
                     when {
                         viewModel.isGiveAnswer() -> {
                             viewModel.givePossibleTip(Pair(rowIndex, columnIndex))
@@ -358,6 +372,7 @@ class TableActivity : AppCompatActivity() {
                             cellView.setBackgroundResource(R.drawable.diagonal_cell_background)
                     }
                     TableType.NORMAL -> {}
+                    else -> {}
                 }
             }
             when (tableType) {
@@ -366,26 +381,23 @@ class TableActivity : AppCompatActivity() {
                         cellView.setBackgroundResource(R.drawable.diagonal_cell_background)
                 }
                 TableType.NORMAL -> {}
+                else -> {}
             }
 
 
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun startTimeCounter() {
-        timer = Timer()
-        var count = 0
-        timer.scheduleAtFixedRate(object : TimerTask() {
-            @SuppressLint("SetTextI18n")
-            override fun run() {
-                val cp = (count).floorDiv(60)
-                val cm = count % 60
-                runOnUiThread {
-                    tvTime.text = "$cp:$cm"
-                }
-                count++
+        viewModel.startTimeCounter()
+        viewModel.count.observe(this) { count ->
+            val cp = (count).floorDiv(60)
+            val cm = count % 60
+            runOnUiThread {
+                tvTime.text = "$cp:$cm"
             }
-        }, 1000, 1000)
+        }
     }
 
 

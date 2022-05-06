@@ -1,9 +1,10 @@
-package com.example.sudoku.database.tableitem
+package com.example.sudoku.database.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import com.example.sudoku.database.entity.TableItem
 
 @Dao
 interface TableDao {
