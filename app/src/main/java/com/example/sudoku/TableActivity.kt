@@ -149,7 +149,6 @@ class TableActivity : AppCompatActivity() {
             TableType.valueOf(intent.getStringExtra("tableType")!!)
         }
 
-
         viewModel.table.observe(this) { table ->
             viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
                 val cellData = table.cells[rowIndex, columnIndex]
@@ -174,7 +173,6 @@ class TableActivity : AppCompatActivity() {
             }
             viewModel.loadGameState()
         }
-
 
         startTimeCounter()
     }
@@ -399,6 +397,5 @@ class TableActivity : AppCompatActivity() {
             }
         }
     }
-
 
 }

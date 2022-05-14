@@ -58,5 +58,9 @@ object DBConnector : DatabaseRepository {
         dbimpl.deleteGameState()
     }
 
+    fun saveFirebase() {
+        TODO("Not yet implemented")
+    }
+
     //TODO Firebase
 }

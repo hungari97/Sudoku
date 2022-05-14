@@ -1,6 +1,7 @@
 package com.example.sudoku
 
 import android.content.Intent
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -12,15 +13,16 @@ import com.example.sudoku.utility.mapInPlace
 import com.example.sudoku.viewmodels.create.CreateViewModel
 import com.example.sudoku.viewmodels.create.CreateViewModelFactory
 import kotlinx.android.synthetic.main.activity_create_table.*
-import kotlinx.android.synthetic.main.activity_main.btAnswer1
-import kotlinx.android.synthetic.main.activity_main.btAnswer2
-import kotlinx.android.synthetic.main.activity_main.btAnswer3
-import kotlinx.android.synthetic.main.activity_main.btAnswer4
-import kotlinx.android.synthetic.main.activity_main.btAnswer5
-import kotlinx.android.synthetic.main.activity_main.btAnswer6
-import kotlinx.android.synthetic.main.activity_main.btAnswer7
-import kotlinx.android.synthetic.main.activity_main.btAnswer8
-import kotlinx.android.synthetic.main.activity_main.btAnswer9
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer1
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer2
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer3
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer4
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer5
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer6
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer7
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer8
+import kotlinx.android.synthetic.main.activity_create_table.btAnswer9
+import kotlinx.android.synthetic.main.activity_create_table.btDelete
 import kotlinx.android.synthetic.main.activity_main.section1
 import kotlinx.android.synthetic.main.activity_main.section2
 import kotlinx.android.synthetic.main.activity_main.section3
@@ -30,12 +32,25 @@ import kotlinx.android.synthetic.main.activity_main.section6
 import kotlinx.android.synthetic.main.activity_main.section7
 import kotlinx.android.synthetic.main.activity_main.section8
 import kotlinx.android.synthetic.main.activity_main.section9
+import kotlinx.android.synthetic.main.sudoku_cell.view.*
 import kotlinx.android.synthetic.main.sudoku_cell_section.view.*
 import javax.inject.Inject
 
 class CreateTableActivity : AppCompatActivity() {
     private var onFocusButton = BooleanArray(9) { false }
-    lateinit var viewCells: Array<Array<View>>
+    private val remainingView = arrayOf(
+        tvLeft1,
+        tvLeft2,
+        tvLeft3,
+        tvLeft4,
+        tvLeft5,
+        tvLeft6,
+        tvLeft7,
+        tvLeft8,
+        tvLeft9
+    )
+
+    lateinit var viewCellTable: Array<Array<View>>
     private lateinit var tableType: TableType
     private lateinit var viewModel: CreateViewModel
 
@@ -55,7 +70,7 @@ class CreateTableActivity : AppCompatActivity() {
 
         viewModel = ViewModelProviders.of(this, factory).get(CreateViewModel::class.java)
 
-        viewCells = arrayOf(
+        viewCellTable = arrayOf(
             arrayOf(
                 section1.full_cell_1,
                 section1.full_cell_2,
@@ -159,12 +174,55 @@ class CreateTableActivity : AppCompatActivity() {
 
         initializeTableCellsListeners()
         buttonsInitialize()
+        countersInitialize()
+
+        viewModel.getInitialiseTable(tableType)
+
+        viewModel.currentTable.observe(this) { table ->
+            viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
+                val cellData = table.cells[rowIndex, columnIndex]
+                displayCellData(cellView, cellData)
 
 
+                when {
+                    cellData.given -> {
+                        if (cellData.given) {
+                            cellView.cell_number.setTextColor(Color.BLUE)
+                        } else {
+                            cellView.cell_number.setTextColor(Color.BLACK)
+                        }
+                        writeNumber(
+                            cellView,
+                            cellData.chosenNumber
+                        )
+                    }
+                    cellData.chosenNumber == 0 -> {
+                        writeNumber(
+                            cellView,
+                            cellData.chosenNumber
+                        )
+                        cellData.shownPossibilities.forEachIndexed { numberIndex, isNumberShown ->
+                            pencilNumberChange(cellView, numberIndex, isNumberShown)
+                        }
+                    }
+                    else -> {
+
+                    }
+                }
+            }
+        }
+    }
+
+    private fun countersInitialize() {
+        val remaining = viewModel.getRemainingNumbers()
+
+        remainingView.forEachIndexed { index, textView ->
+            textView.text = remaining[index].toString()
+        }
     }
 
     private fun setBackgroundNormal() {
-        viewCells.forEachCellIndexed { rowIndex, columnIndex, cellView ->
+        viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
             cellView.setBackgroundResource(R.drawable.cell_border)
             when (tableType) {
                 TableType.DIAGONAL -> {
@@ -177,25 +235,29 @@ class CreateTableActivity : AppCompatActivity() {
     }
 
     private fun initializeTableCellsListeners() {
-
-        viewCells.forEachCellIndexed { rowIndex, columnIndex, cellView ->
+        viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
             cellView.setOnClickListener {
                 if (viewModel.isDelete()) {
                     onFocusButton.fill(false)
                     viewModel.hideNumber(rowIndex, columnIndex)
+                    viewModel.numberDeletedRemainingUpdate()
                 } else if (onFocusButton.contains(true)) {
                     viewModel.writeAnswer(
                         Pair(rowIndex, columnIndex),
                         onFocusButton.indexOf(true) + 1
                     )
+                    viewModel.decreseRemainingNumber(onFocusButton.indexOf(true))
+                    remainingView[onFocusButton.indexOf(true)].text =
+                        viewModel.NumberRemaining(onFocusButton.indexOf(true)).toString()
                 }
 
                 setBackgroundNormal()
+                //chosen row and column
                 for (i in 0 until 9) {
-                    viewCells[rowIndex, i].setBackgroundResource(R.drawable.selected_row_or_column_cell)
-                    viewCells[i, columnIndex].setBackgroundResource(R.drawable.selected_row_or_column_cell)
-
+                    viewCellTable[rowIndex, i].setBackgroundResource(R.drawable.selected_row_or_column_cell)
+                    viewCellTable[i, columnIndex].setBackgroundResource(R.drawable.selected_row_or_column_cell)
                 }
+                //chosen cell
                 cellView.setBackgroundResource(R.drawable.cell_border)
 
                 when (tableType) {
@@ -213,13 +275,10 @@ class CreateTableActivity : AppCompatActivity() {
                 }
                 else -> {}
             }
-
-
         }
     }
 
     private fun buttonsInitialize() {
-
         val btAnswerList = listOf(
             btAnswer1,
             btAnswer2,
@@ -231,13 +290,19 @@ class CreateTableActivity : AppCompatActivity() {
             btAnswer8,
             btAnswer9
         )
-
         btAnswerList.forEachIndexed { index, button ->
             button.setOnClickListener {
                 onFocusButton.mapInPlace { false }
                 onFocusButton[index] = true
                 it.setBackgroundResource(R.drawable.number_selector_background)
             }
+        }
+        btDelete.setOnClickListener {
+            viewModel.changeDelete()
+            if (viewModel.isDelete())
+                it.setBackgroundColor(Color.YELLOW)
+            else
+                it.setBackgroundColor(Color.WHITE)
         }
 
         btBack.setOnClickListener {
@@ -248,9 +313,53 @@ class CreateTableActivity : AppCompatActivity() {
                 )
             )
         }
+
         btSave.setOnClickListener {
             viewModel.saveTable()
         }
     }
+
+    private fun writeNumber(cell: View, number: Int) {
+        cell.cell_number.text = if (number != 0) {
+            number.toString()
+        } else {
+            " "
+        }
+
+        cell.cell_number.visibility = if (number != 0) {
+            View.VISIBLE
+        } else {
+            View.INVISIBLE
+        }
+
+        cell.tips.forEach {
+            it.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun pencilNumberChange(cell: View, number: Int, visible: Boolean) {
+        if (cell.cell_number.visibility == View.INVISIBLE) {
+            val tipCell = cell.tips[number]
+
+            tipCell.visibility = if (visible) {
+                View.VISIBLE
+            } else {
+                View.INVISIBLE
+            }
+        }
+    }
+
+    private val View.tips
+        get() = listOf(
+            cell_tip_1,
+            cell_tip_2,
+            cell_tip_3,
+            cell_tip_4,
+            cell_tip_5,
+            cell_tip_6,
+            cell_tip_7,
+            cell_tip_8,
+            cell_tip_9
+        )
 
 }
