@@ -3,7 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Git/GitHub/SourceCodes/Kotlin/Android/Sudoku/app/src/main/res/layout/activity_main_menu.xml" value="0.10099637681159421" />
+        <entry key="..\:/Git/GitHub/SourceCodes/Kotlin/Android/Sudoku/app/src/main/res/drawable/diagonal_cell_background.xml" value="0.1" />
+        <entry key="..\:/Git/GitHub/SourceCodes/Kotlin/Android/Sudoku/app/src/main/res/drawable/number_selector_background.xml" value="0.1" />
+        <entry key="..\:/Git/GitHub/SourceCodes/Kotlin/Android/Sudoku/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Git/GitHub/SourceCodes/Kotlin/Android/Sudoku/app/src/main/res/layout/activity_main_menu.xml" value="0.1" />
         <entry key="..\:/git/github/android/Sudoku/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.255" />
         <entry key="..\:/git/github/android/Sudoku/app/src/main/res/drawable/cell_border.xml" value="0.2703125" />
         <entry key="..\:/git/github/android/Sudoku/app/src/main/res/drawable/diagonal_cell_background.xml" value="0.251" />

@@ -5,7 +5,7 @@ class Cell(val solutionNumber: Int, val given: Boolean) {
     var shownPossibilities = BooleanArray(9) { false }
     var chosenNumber: Int = 0
         set(value) {
-            if ((!given && !checkChosenNumber()) || (given && field == 0)) {
+            if ((!given && !isChosenNumberCorrect()) || (given && field == 0)) {
                 field = value
             }
         }
@@ -20,7 +20,7 @@ class Cell(val solutionNumber: Int, val given: Boolean) {
         }
     }
 
-    fun checkChosenNumber(): Boolean {
+    fun isChosenNumberCorrect(): Boolean {
         return chosenNumber == solutionNumber
     }
 

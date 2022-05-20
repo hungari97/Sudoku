@@ -18,4 +18,16 @@ class TableRepositoryImpl(private val data: ModelData) : TableRepository {
         data.saveGameState(table,remainingHelp,secondsPassed)
     }
 
+    override fun createTable(table: Table) {
+        TODO("Not yet implemented")
+    }
+
+    override fun getBlankTable(mode: TableType): Table {
+        TODO("Not yet implemented")
+    }
+
+    override fun clearGameState() {
+        data.clearGameState()
+    }
+
 }

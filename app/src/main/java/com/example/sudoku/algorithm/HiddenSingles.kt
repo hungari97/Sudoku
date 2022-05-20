@@ -17,7 +17,7 @@ class HiddenSingles(private var table: Table) {
 
         if (tempPossibilities.contains(1)) {
             tempPossibilities.forEachIndexed { index, sum ->
-                if (sum == 1 && table.cells[checkedRow, index].checkChosenNumber()) {
+                if (sum == 1 && table.cells[checkedRow, index].isChosenNumberCorrect()) {
                     table.cells[checkedRow, index].reduceAllPossibilities(index + 1)
                 }
             }
@@ -35,7 +35,7 @@ class HiddenSingles(private var table: Table) {
 
         if (tempPossibilities.contains(1)) {
             tempPossibilities.forEachIndexed { index, sum ->
-                if (sum == 1 && table.cells[index, checkedColumn].checkChosenNumber()) {
+                if (sum == 1 && table.cells[index, checkedColumn].isChosenNumberCorrect()) {
                     table.cells[index, checkedColumn].reduceAllPossibilities(index + 1)
                 }
             }
@@ -79,7 +79,7 @@ class HiddenSingles(private var table: Table) {
                                     rowindex, columnindex
                                 )].allPossibilities[index] && table.cells[start + Pair(
                                     rowindex, columnindex
-                                )].checkChosenNumber()
+                                )].isChosenNumberCorrect()
                             ) {
                                 table.cells[start + Pair(
                                     rowindex, columnindex
@@ -96,7 +96,7 @@ class HiddenSingles(private var table: Table) {
 
     fun writeAllSingles() {
         table.cells.forEachCellIndexed { rowIndex, columnIndex, column ->
-            if (column.allPossibilities.count { it } == 1 && !column.checkChosenNumber()) {
+            if (column.allPossibilities.count { it } == 1 && !column.isChosenNumberCorrect()) {
                 table.writeAnswer(
                     Pair(rowIndex, columnIndex),
                     column.allPossibilities.indexOf(true) + 1

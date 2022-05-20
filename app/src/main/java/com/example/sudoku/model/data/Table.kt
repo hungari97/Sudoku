@@ -25,11 +25,11 @@ open class Table(
 
     private fun initializeTable() {
         cells.forEachCellIndexed { rowIndex, columnIndex, cell ->
-            if (cell.checkChosenNumber()) {
+            if (cell.isChosenNumberCorrect()) {
                 removeTipsPossibilities(
                     Pair(rowIndex, columnIndex),
                     cell.chosenNumber,
-                    cell.checkChosenNumber()
+                    cell.isChosenNumberCorrect()
                 )
             }
         }
@@ -41,16 +41,16 @@ open class Table(
 
     fun writeAnswer(spot: Pair<Int, Int>, value: Int): Pair<Boolean, Boolean> {
         cells[spot].writeAnswer(value)
-        removeTipsPossibilities(spot, value, cells[spot].checkChosenNumber())
+        removeTipsPossibilities(spot, value, cells[spot].isChosenNumberCorrect())
         return Pair(
             true,
-            cells[spot].checkChosenNumber()
+            cells[spot].isChosenNumberCorrect()
         )
     }
 
     fun isFinished(): Boolean {
         cells.forEachCell { cell ->
-            if (!cell.checkChosenNumber()) {
+            if (!cell.isChosenNumberCorrect()) {
                 return false
             }
         }

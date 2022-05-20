@@ -181,16 +181,17 @@ class CreateTableActivity : AppCompatActivity() {
         viewModel.currentTable.observe(this) { table ->
             viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
                 val cellData = table.cells[rowIndex, columnIndex]
-                displayCellData(cellView, cellData)
+                //TODO displayCellData(cellView, cellData)
 
 
                 when {
                     cellData.given -> {
-                        if (cellData.given) {
-                            cellView.cell_number.setTextColor(Color.BLUE)
-                        } else {
-                            cellView.cell_number.setTextColor(Color.BLACK)
-                        }
+                        cellView.cell_number.setTextColor(
+                            if (cellData.given)
+                                Color.BLUE
+                            else
+                                Color.BLACK
+                        )
                         writeNumber(
                             cellView,
                             cellData.chosenNumber

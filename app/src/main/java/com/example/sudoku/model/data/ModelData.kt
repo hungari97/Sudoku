@@ -152,4 +152,8 @@ class ModelData {
         }
     }
 
+    fun clearGameState() {
+        DBConnector.deleteGameState()
+    }
+
 }
