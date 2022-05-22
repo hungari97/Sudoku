@@ -40,7 +40,7 @@ class OddEvenTable : Table {
                         it.allPossibilities[numberInner - 1] = false
                 }
 
-            (0 until 9).forEach { numberInner ->
+            (1..9).forEach { numberInner ->
                 if (numberInner.isEven() != number.isEven())
                     it.shownPossibilities[numberInner - 1] = false
             }
