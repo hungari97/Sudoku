@@ -4,8 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sudoku.database.DBConnector
-import com.example.sudoku.model.data.Table
+import com.example.sudoku.model.data.table.Table
 import com.example.sudoku.model.TableRepository
 import com.example.sudoku.model.data.TableType
 import com.example.sudoku.utility.forEachCellIndexed

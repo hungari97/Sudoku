@@ -1,7 +1,8 @@
 package com.example.sudoku.database.util
 
-import com.example.sudoku.model.data.DiagonalTable
-import com.example.sudoku.model.data.Table
+import com.example.sudoku.model.data.table.DiagonalTable
+import com.example.sudoku.model.data.table.NormalTable
+import com.example.sudoku.model.data.table.Table
 
 enum class Table0Initialize {
     NORMAL {
@@ -17,7 +18,7 @@ enum class Table0Initialize {
                 64, 67, 70,
                 72, 75, 77
             )
-            return Table(
+            return NormalTable(
                 "N_0_",
                 intArrayOf(
                     9, 8, 1, 7, 2, 4, 3, 6, 5,
@@ -68,7 +69,7 @@ enum class Table0Initialize {
         override fun create0Table(): Table {
             val givenN = intArrayOf(
             )
-            return Table(
+            return NormalTable(
                 "NC_0_",
                 intArrayOf(
                     0, 0, 0, 0, 0, 0, 0, 0, 0,

@@ -5,8 +5,14 @@ import com.example.sudoku.SudokuApp
 import com.example.sudoku.database.entity.GameState
 import com.example.sudoku.database.entity.TableItem
 import com.example.sudoku.model.data.TableType
-import com.example.sudoku.model.data.Table
-import com.example.sudoku.utility.forEachCell
+import com.example.sudoku.model.data.table.DiagonalTable
+import com.example.sudoku.model.data.table.NormalTable
+import com.example.sudoku.model.data.table.OddEvenTable
+import com.example.sudoku.model.data.table.Table
+import com.example.sudoku.utility.decodeAsBooleanArray
+import com.example.sudoku.utility.decodeAsNumberArray
+import com.example.sudoku.utility.encode
+import com.example.sudoku.utility.get
 
 class DatabaseRepositoryImpl : DatabaseRepository {
     private val database = (SudokuApp).database
@@ -17,70 +23,98 @@ class DatabaseRepositoryImpl : DatabaseRepository {
 
     }
 
-    private fun decodeTable(tableEncoded: String, reference: String): Table {
+    private fun decodeTable(tableEncoded: String, id: String, tableType: TableType): Table {
 
-        val tableCoded: CharArray = tableEncoded.toCharArray()
-
-        val temp = tableCoded.map { it - '0' }
-
-        return Table(
-            solutionArray = temp.slice(0 until 81).toIntArray(),
-            givenNumbers = temp.slice(81 until 162).map { it > 0 }.toBooleanArray(),
-            reference = reference
-        )
+        return when (tableType) {
+            TableType.NORMAL -> NormalTable(
+                solutionArray = tableEncoded
+                    .slice(0 until 81)
+                    .decodeAsNumberArray(),
+                givenNumbers = tableEncoded
+                    .slice(81 until 162)
+                    .decodeAsBooleanArray(),
+                id = id
+            )
+            TableType.DIAGONAL -> DiagonalTable(
+                solutionArray = tableEncoded
+                    .slice(0 until 81)
+                    .decodeAsNumberArray(),
+                givenNumbers = tableEncoded
+                    .slice(81 until 162)
+                    .decodeAsBooleanArray(),
+                id = id
+            )
+            TableType.ODD_EVEN -> OddEvenTable(
+                solutionArray = tableEncoded
+                    .slice(0 until 81)
+                    .decodeAsNumberArray(),
+                givenNumbers = tableEncoded
+                    .slice(81 until 162)
+                    .decodeAsBooleanArray(),
+                oddEvenGroup = tableEncoded
+                    .slice(162 until 243)
+                    .decodeAsBooleanArray(),
+                id = id
+            )
+        }
     }
 
     @WorkerThread
     override fun getTable(tableType: TableType): Table {
-        val data = database.tableDao().getTableByNum("N_0_")
-        return decodeTable(data.tableArray, data.referenceNumber)
+        val tablesWithType = database.tableDao().getTableByType(tableType.name)
+        val chosenTable = tablesWithType.random()
+        return decodeTable(chosenTable.content, chosenTable.id, tableType)
 
     }
 
     fun delete(record: Table) {
-        val data = StringBuilder()
-        record.cells.forEachCell { cell ->
-            data.append(cell.solutionNumber)
-        }
-
-        record.cells.forEachCell {
-            if (it.given) {
-                data.append(2)
-            } else {
-                data.append(0)
-            }
-        }
-        val dbRecord = TableItem(0, record.reference, data.toString())
-        database.tableDao().deleteTable(dbRecord)
+        database.tableDao().deleteTable(record.id)
     }
 
     @WorkerThread
-    override fun insertTable(item: Table) {
-        val data = buildString {
-            item.cells.forEachCell { cell ->
-                append(cell.solutionNumber)
+    override fun insertTable(table: Table) {
+        val content = buildString {
+            append(
+                table.cells
+                    .flatten()
+                    .map { cell -> cell.solutionNumber }
+                    .toIntArray()
+                    .encode()
+            )
+            append(
+                table.cells
+                    .flatten()
+                    .map { cell -> cell.given }
+                    .toBooleanArray()
+                    .encode()
+            )
+            table.cells[0, 0].groupFlags.indices.forEach { groupIndex ->
+                append(
+                    table.cells
+                        .flatten()
+                        .map { cell -> cell.groupFlags[groupIndex] }
+                        .toBooleanArray()
+                        .encode()
+                )
             }
-            item.cells.forEachCell {
-                if (it.given) {
-                    append(2)
-                } else {
-                    append(0)
-                }
-            }
-
         }
 
-        val bditem = TableItem(0, item.reference, data)
+        val type = when (table) {
+            is NormalTable -> TableType.NORMAL
+            is DiagonalTable -> TableType.DIAGONAL
+            is OddEvenTable -> TableType.ODD_EVEN
+        }.name
 
-        database.tableDao().insertItem(bditem)
+        val tableItem = TableItem(table.id, type, content)
+
+        database.tableDao().insertItem(tableItem)
     }
 
     override fun loadGameState(): GameState? {
         return database.gameStateDao().getAll()
             .firstOrNull()
             ?.apply {
-                val t = database.tableStateDao().getByGameStateId(id)
-                table = t
+                table = database.tableStateDao().getByGameStateId(id)
                 table?.apply {
                     cells = database.cellStateDao()
                         .getByTableStateId(id)
@@ -119,14 +153,14 @@ class DatabaseRepositoryImpl : DatabaseRepository {
     fun getAllTable(): List<Table> {
         return database.tableDao().getAll()
             .map { data ->
-                decodeTable(data.tableArray, data.referenceNumber)
+                decodeTable(data.content, data.id, TableType.valueOf(data.type))
             }
     }
 
     private fun dbInitialise() {
         val tables = ArrayList<Table>()
 
-        var givenN = intArrayOf(
+        var givenN = sortedSetOf(
             0, 1, 4, 5, 8,
             12, 14,
             19, 23, 25,
@@ -139,8 +173,8 @@ class DatabaseRepositoryImpl : DatabaseRepository {
         )
 
         tables.add(
-            Table(
-                "N_1_",
+            NormalTable(
+                "N_0",
                 intArrayOf(
                     7, 2, 5, 1, 9, 6, 4, 8, 3,
                     4, 6, 3, 2, 8, 5, 9, 7, 1,
@@ -157,7 +191,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
             )
         )
 
-        givenN = intArrayOf(
+        givenN = sortedSetOf(
             0, 4, 5,
             9, 10, 12, 16,
             20, 21, 23, 24, 25, 26,
@@ -169,8 +203,8 @@ class DatabaseRepositoryImpl : DatabaseRepository {
             72, 73, 76, 77, 79, 80
         )
         tables.add(
-            Table(
-                "N_2_",
+            NormalTable(
+                "N_1",
                 intArrayOf(
                     3, 8, 6, 1, 5, 2, 4, 9, 7,
                     2, 5, 7, 3, 4, 9, 6, 1, 8,
@@ -187,7 +221,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
             )
         )
 
-        givenN = intArrayOf(
+        givenN = sortedSetOf(
             3, 4,
             9, 10, 13,
             18, 20, 21, 24, 26,
@@ -199,8 +233,8 @@ class DatabaseRepositoryImpl : DatabaseRepository {
             76, 77
         )
         tables.add(
-            Table(
-                "D_1_",
+            DiagonalTable(
+                "D_0",
                 intArrayOf(
                     2, 5, 4, 8, 1, 7, 9, 3, 6,
                     8, 6, 3, 4, 9, 2, 7, 1, 5,
@@ -218,7 +252,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
             )
         )
 
-        givenN = intArrayOf(
+        givenN = sortedSetOf(
             2, 6, 7,
             9, 14,
             18, 26,
@@ -229,8 +263,8 @@ class DatabaseRepositoryImpl : DatabaseRepository {
             74, 75, 78
         )
         tables.add(
-            Table(
-                "D_2_",
+            DiagonalTable(
+                "D_1",
                 intArrayOf(
                     5, 7, 4, 2, 9, 6, 8, 1, 3,
                     6, 9, 8, 7, 1, 3, 4, 2, 5,
@@ -243,6 +277,48 @@ class DatabaseRepositoryImpl : DatabaseRepository {
                     7, 1, 5, 3, 2, 4, 9, 6, 8
                 ), BooleanArray(81) {
                     givenN.contains(it)
+                }
+            )
+        )
+
+        givenN = sortedSetOf(
+            4, 5,
+            14, 15,
+            19, 20, 24,
+            27, 28,
+            36, 40, 44,
+            52, 53,
+            56, 60, 61,
+            65, 66,
+            75, 76
+        )
+        val oddEven = sortedSetOf(
+            12, 14,
+            22,
+            28, 34,
+            38, 42,
+            46, 52,
+            58,
+            66, 68
+
+        )
+        tables.add(
+            OddEvenTable(
+                "O_0",
+                intArrayOf(
+                    3, 2, 8, 7, 4, 1, 6, 9, 5,
+                    5, 7, 6, 8, 9, 2, 4, 3, 1,
+                    4, 1, 9, 3, 6, 5, 7, 8, 2,
+                    9, 8, 3, 4, 5, 6, 1, 2, 7,
+                    6, 5, 2, 1, 7, 3, 8, 4, 9,
+                    7, 4, 1, 9, 2, 8, 5, 6, 3,
+                    2, 6, 7, 5, 8, 9, 3, 1, 4,
+                    8, 3, 5, 2, 1, 4, 9, 7, 6,
+                    1, 9, 4, 6, 3, 7, 2, 5, 8
+                ), BooleanArray(81) {
+                    givenN.contains(it)
+                }, BooleanArray(81) {
+                    oddEven.contains(it)
                 }
             )
         )

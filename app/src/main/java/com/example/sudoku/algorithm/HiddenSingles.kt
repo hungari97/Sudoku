@@ -1,6 +1,6 @@
 package com.example.sudoku.algorithm
 
-import com.example.sudoku.model.data.Table
+import com.example.sudoku.model.data.table.Table
 import com.example.sudoku.utility.forEachCellIndexed
 import com.example.sudoku.utility.get
 import com.example.sudoku.utility.plus

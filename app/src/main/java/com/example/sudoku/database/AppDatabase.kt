@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.sudoku.database.dao.CellStateDao
 import com.example.sudoku.database.dao.GameStateDao
-import com.example.sudoku.database.dao.TableDao
+import com.example.sudoku.database.dao.TableItemDao
 import com.example.sudoku.database.dao.TableStateDao
 import com.example.sudoku.database.entity.CellState
 import com.example.sudoku.database.entity.GameState
@@ -19,7 +19,7 @@ import com.example.sudoku.database.entity.TableState
 )
 abstract class AppDatabase : RoomDatabase() {
 
-    abstract fun tableDao(): TableDao
+    abstract fun tableDao(): TableItemDao
     abstract fun gameStateDao(): GameStateDao
     abstract fun tableStateDao(): TableStateDao
     abstract fun cellStateDao(): CellStateDao
@@ -41,15 +41,5 @@ abstract class AppDatabase : RoomDatabase() {
             }
             return instance
         }
-
-        /*
-        private val roomCallBack: Callback = object : Callback() {
-            override fun onCreate(db: SupportSQLiteDatabase) {
-                super.onCreate(db)
-
-            }
-        }
-
-         */
     }
 }

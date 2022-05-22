@@ -6,13 +6,12 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProviders
-import com.example.sudoku.model.data.Cell
 import com.example.sudoku.model.data.SelectedGameFunction
-import com.example.sudoku.model.data.Table
 import com.example.sudoku.model.data.TableType
+import com.example.sudoku.model.data.table.Cell
+import com.example.sudoku.model.data.table.Table
 import com.example.sudoku.utility.forEachCellIndexed
 import com.example.sudoku.utility.get
 import com.example.sudoku.viewmodels.main.MainViewModel
@@ -193,10 +192,7 @@ class TableActivity : AppCompatActivity() {
     }
 
     private fun onTableLoaded(table: Table) {
-        sudokuType = when {
-            table.reference.startsWith("N_") -> TableType.NORMAL
-            else -> TableType.DIAGONAL
-        }
+        sudokuType = TableType.fromTableType(table)
         initializeTableCellListeners()
         initializeNumberSelectorButtons()
         initializeFunctionButtons()
@@ -325,7 +321,7 @@ class TableActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateFunctionButtonBackGrounds(){
+    private fun updateFunctionButtonBackGrounds() {
         btDelete.setBackgroundColor(
             if (viewModel.selectedFunction == SelectedGameFunction.DELETION)
                 Color.YELLOW
@@ -352,8 +348,7 @@ class TableActivity : AppCompatActivity() {
     private fun setBackgroundNormal() {
         viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
             cellView.setBackgroundResource(R.drawable.cell_border)
-            if (sudokuType == TableType.DIAGONAL && isPositionOnDiagonal(rowIndex, columnIndex))
-                cellView.setBackgroundResource(R.drawable.diagonal_cell_background)
+            setBackgroundOFGroups(rowIndex, columnIndex, cellView)
         }
     }
 
@@ -363,8 +358,7 @@ class TableActivity : AppCompatActivity() {
                 viewModel.selectPosition(rowIndex, columnIndex)
                 updateCellBackGround(rowIndex, columnIndex, cell)
             }
-            if (sudokuType == TableType.DIAGONAL && isPositionOnDiagonal(rowIndex, columnIndex))
-                cellView.setBackgroundResource(R.drawable.diagonal_cell_background)
+            setBackgroundOFGroups(rowIndex, columnIndex, cellView)
         }
     }
 
@@ -376,8 +370,15 @@ class TableActivity : AppCompatActivity() {
         }
         selectedCell.setBackgroundResource(R.drawable.cell_border)
 
-        if (sudokuType == TableType.DIAGONAL && isPositionOnDiagonal(selectedRow, selectedColumn))
-            selectedCell.setBackgroundResource(R.drawable.diagonal_cell_background)
+        setBackgroundOFGroups(selectedRow, selectedColumn, selectedCell)
+    }
+
+    private fun setBackgroundOFGroups(rowIndex: Int, columnIndex: Int, cellView: View) {
+        if (sudokuType == TableType.DIAGONAL && isPositionOnDiagonal(rowIndex, columnIndex))
+            cellView.setBackgroundResource(R.drawable.diagonal_cell_background)
+
+        if (sudokuType == TableType.ODD_EVEN && viewModel.isInGroup(rowIndex, columnIndex, 0))
+            cellView.setBackgroundResource(R.drawable.diagonal_cell_background)
     }
 
     private fun isPositionOnDiagonal(rowIndex: Int, columnIndex: Int) =

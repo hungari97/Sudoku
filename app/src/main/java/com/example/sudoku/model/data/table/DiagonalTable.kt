@@ -1,20 +1,22 @@
-package com.example.sudoku.model.data
+package com.example.sudoku.model.data.table
 
 import com.example.sudoku.utility.forEachCellIndexed
+import java.util.*
+import kotlin.random.Random
 
 class DiagonalTable : Table {
 
     constructor(
-        reference: String = "D_0_",
+        id: String = UUID.randomUUID().toString(),
         cells: Array<Array<Cell>>
-    ) : super(reference, cells)
+    ) : super(id, cells)
 
     constructor(
-        reference: String = "D_0_",
+        id: String = UUID.randomUUID().toString(),
         solutionArray: IntArray,
         givenNumbers: BooleanArray
     ) : super(
-        reference,
+        id,
         solutionArray,
         givenNumbers)
 

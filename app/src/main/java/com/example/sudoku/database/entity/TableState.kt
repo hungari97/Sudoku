@@ -1,5 +1,6 @@
 package com.example.sudoku.database.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
@@ -8,7 +9,7 @@ import java.util.*
 @Entity(tableName = "tableState")
 data class TableState(
     @PrimaryKey() val id: String = UUID.randomUUID().toString(),
-    val reference: String,
+    @ColumnInfo(name = "tableType") val tableType: String,
 ) {
     @Ignore
     var cells: Array<CellState>? = null

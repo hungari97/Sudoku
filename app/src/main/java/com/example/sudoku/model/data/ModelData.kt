@@ -4,7 +4,9 @@ import com.example.sudoku.database.DBConnector
 import com.example.sudoku.database.entity.CellState
 import com.example.sudoku.database.entity.GameState
 import com.example.sudoku.database.entity.TableState
-import kotlin.random.Random
+import com.example.sudoku.model.data.table.*
+import com.example.sudoku.utility.decodeAsBooleanArray
+import com.example.sudoku.utility.encode
 
 class ModelData {
     private lateinit var table: Table
@@ -14,24 +16,18 @@ class ModelData {
         return table
     }
 
-    private fun BooleanArray.encode(): String {
-        return buildString {
-            this@encode.forEach {
-                append(if (it) 1 else 0)
-            }
-        }
-    }
-
     fun saveGameState(table: Table, remainingHelpCount: Int, secondsPassed: Int) {
         val gameState =
             GameState(remainingHelpCount = remainingHelpCount, secondsPassed = secondsPassed)
-        val tableState = TableState(reference = table.reference)
+        val tableType = TableType.fromTableType(table).name
+        val tableState = TableState(id = table.id, tableType = tableType)
         tableState.cells = table.cells
             .flatten()
             .map {
                 CellState(
                     solutionNumber = it.solutionNumber,
                     given = it.given,
+                    groupFlagsEncoded = it.groupFlags.encode(),
                     allPossibilitiesEncoded = it.allPossibilities.encode(),
                     shownPossibilitiesEncoded = it.shownPossibilities.encode(),
                     chosenNumber = it.chosenNumber
@@ -42,11 +38,6 @@ class ModelData {
         DBConnector.saveGameState(gameState)
     }
 
-    private fun String.decodeAsBooleanArray(): BooleanArray {
-        return toCharArray()
-            .map { it == '1' }
-            .toBooleanArray()
-    }
 
     fun loadGameStateOrNull(): GameStateDto? {
         val gameState = DBConnector.loadGameState() ?: return null
@@ -57,7 +48,10 @@ class ModelData {
                 cellRow.map { cellState ->
                     Cell(
                         solutionNumber = cellState.solutionNumber,
-                        given = cellState.given
+                        given = cellState.given,
+                        groupFlags = cellState
+                            .groupFlagsEncoded
+                            .decodeAsBooleanArray()
                     ).apply {
                         chosenNumber = cellState.chosenNumber
                         allPossibilities = cellState
@@ -69,18 +63,13 @@ class ModelData {
                     }
                 }.toTypedArray()
             }.toTypedArray()
-        val reference = gameState.table!!.reference
-        val table: Table = when {
-            reference.startsWith("N_") ->
-                Table(
-                    reference,
-                    cells
-                )
-            else ->
-                DiagonalTable(
-                    reference,
-                    cells
-                )
+
+        val table: Table = gameState.table!!.run {
+            when (TableType.valueOf(tableType)) {
+                TableType.NORMAL -> NormalTable(id, cells)
+                TableType.DIAGONAL -> DiagonalTable(id, cells)
+                TableType.ODD_EVEN -> OddEvenTable(id, cells)
+            }
         }
         return GameStateDto(
             gameState.remainingHelpCount,
@@ -96,7 +85,6 @@ class ModelData {
         repeat(18) { switchRandomLines() }
         return table
     }
-    */
 
     private fun switchRandomLines() {
         val boxLineIndex = Random.nextInt(3)
@@ -151,9 +139,11 @@ class ModelData {
             }
         }
     }
+    */
 
     fun clearGameState() {
         DBConnector.deleteGameState()
     }
 
 }
+

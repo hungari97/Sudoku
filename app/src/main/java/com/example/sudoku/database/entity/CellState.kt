@@ -18,6 +18,7 @@ data class CellState(
     @PrimaryKey() val id: String = UUID.randomUUID().toString(),
     val solutionNumber: Int,
     val given: Boolean,
+    val groupFlagsEncoded:String,
     var allPossibilitiesEncoded: String,
     var shownPossibilitiesEncoded: String,
     var chosenNumber: Int

@@ -1,6 +1,10 @@
-package com.example.sudoku.model.data
+package com.example.sudoku.model.data.table
 
-class Cell(val solutionNumber: Int, val given: Boolean) {
+class Cell(
+    val solutionNumber: Int,
+    val given: Boolean,
+    var groupFlags: BooleanArray
+) {
     var allPossibilities = BooleanArray(9) { true }
     var shownPossibilities = BooleanArray(9) { false }
     var chosenNumber: Int = 0
@@ -48,14 +52,14 @@ class Cell(val solutionNumber: Int, val given: Boolean) {
         }
     }
 
-    fun reduceAllPossibilities(onlyPossibility:Int){
+    fun reduceAllPossibilities(onlyPossibility: Int) {
         if (!given) {
             allPossibilities.fill(false)
             allPossibilities[onlyPossibility - 1] = true
         }
     }
 
-    fun givePossibility(){
+    fun givePossibility() {
         hideNumbers()
         chosenNumber = solutionNumber
         reduceAllPossibilities(chosenNumber)

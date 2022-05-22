@@ -2,14 +2,13 @@ package com.example.sudoku.database
 
 import com.example.sudoku.database.entity.GameState
 import com.example.sudoku.model.data.TableType
-import com.example.sudoku.model.data.Table
+import com.example.sudoku.model.data.table.DiagonalTable
+import com.example.sudoku.model.data.table.OddEvenTable
+import com.example.sudoku.model.data.table.Table
 
 object DBConnector : DatabaseRepository {
     private val dbimpl by lazy { DatabaseRepositoryImpl() }
     private var localDB = mutableListOf<Table>()
-
-    init {
-    }
 
     override fun getTable(tableType: TableType): Table {
         /*
@@ -30,20 +29,17 @@ object DBConnector : DatabaseRepository {
 
         return localDB.filter {
             when (tableType) {
-                TableType.NORMAL -> {
-                    it.reference.startsWith("N_")
-                }
-                TableType.DIAGONAL -> {
-                    it.reference.startsWith("D_")
-                }
+                TableType.DIAGONAL -> it is DiagonalTable
+                TableType.ODD_EVEN -> it is OddEvenTable
+                TableType.NORMAL -> it !is DiagonalTable && it !is OddEvenTable
             }
         }.random()
 
 
     }
 
-    override fun insertTable(item: Table) {
-        dbimpl.insertTable(item)
+    override fun insertTable(table: Table) {
+        dbimpl.insertTable(table)
     }
 
     override fun loadGameState(): GameState? {

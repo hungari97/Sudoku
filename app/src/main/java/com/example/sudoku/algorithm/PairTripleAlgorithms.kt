@@ -1,6 +1,6 @@
 package com.example.sudoku.algorithm
 
-import com.example.sudoku.model.data.Table
+import com.example.sudoku.model.data.table.Table
 
 class PairTripleAlgorithms(private var table: Table) {
 

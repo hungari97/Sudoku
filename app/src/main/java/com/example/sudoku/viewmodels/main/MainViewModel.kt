@@ -4,11 +4,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sudoku.model.data.TableType
-import com.example.sudoku.model.data.Table
 import com.example.sudoku.model.TableRepository
 import com.example.sudoku.model.data.SelectedGameFunction
 import com.example.sudoku.model.data.SelectedGameFunction.*
+import com.example.sudoku.model.data.TableType
+import com.example.sudoku.model.data.table.Table
 import com.example.sudoku.utility.get
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -152,5 +152,9 @@ class MainViewModel(private val tableRepository: TableRepository) : ViewModel() 
 
         tableMutable.value?.writeAnswer(index, number)
         updateTable()
+    }
+
+    fun isInGroup(row: Int, column: Int, groupIndex: Int): Boolean {
+        return tableMutable.value!!.cells[row, column].groupFlags[groupIndex]
     }
 }
