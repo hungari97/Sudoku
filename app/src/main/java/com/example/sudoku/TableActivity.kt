@@ -348,7 +348,7 @@ class TableActivity : AppCompatActivity() {
     private fun setBackgroundNormal() {
         viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
             cellView.setBackgroundResource(R.drawable.cell_border)
-            setBackgroundOFGroups(rowIndex, columnIndex, cellView)
+            setBackgroundOfGroups(rowIndex, columnIndex, cellView)
         }
     }
 
@@ -358,7 +358,7 @@ class TableActivity : AppCompatActivity() {
                 viewModel.selectPosition(rowIndex, columnIndex)
                 updateCellBackGround(rowIndex, columnIndex, cell)
             }
-            setBackgroundOFGroups(rowIndex, columnIndex, cellView)
+            setBackgroundOfGroups(rowIndex, columnIndex, cellView)
         }
     }
 
@@ -370,10 +370,10 @@ class TableActivity : AppCompatActivity() {
         }
         selectedCell.setBackgroundResource(R.drawable.cell_border)
 
-        setBackgroundOFGroups(selectedRow, selectedColumn, selectedCell)
+        setBackgroundOfGroups(selectedRow, selectedColumn, selectedCell)
     }
 
-    private fun setBackgroundOFGroups(rowIndex: Int, columnIndex: Int, cellView: View) {
+    private fun setBackgroundOfGroups(rowIndex: Int, columnIndex: Int, cellView: View) {
         if (sudokuType == TableType.DIAGONAL && isPositionOnDiagonal(rowIndex, columnIndex))
             cellView.setBackgroundResource(R.drawable.diagonal_cell_background)
 

@@ -150,7 +150,7 @@ class MainViewModel(private val tableRepository: TableRepository) : ViewModel() 
         if (selectedNumberIndex == null)
             return
 
-        tableMutable.value?.writeAnswer(index, number)
+        tableMutable.value?.writeTip(index, number)
         updateTable()
     }
 
