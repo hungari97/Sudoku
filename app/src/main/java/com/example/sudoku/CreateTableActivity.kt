@@ -5,8 +5,10 @@ import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.lifecycle.ViewModelProviders
 import com.example.sudoku.model.data.TableType
+import com.example.sudoku.model.data.table.Cell
 import com.example.sudoku.utility.forEachCellIndexed
 import com.example.sudoku.utility.get
 import com.example.sudoku.utility.mapInPlace
@@ -38,17 +40,7 @@ import javax.inject.Inject
 
 class CreateTableActivity : AppCompatActivity() {
     private var onFocusButton = BooleanArray(9) { false }
-    private val remainingView = arrayOf(
-        tvLeft1,
-        tvLeft2,
-        tvLeft3,
-        tvLeft4,
-        tvLeft5,
-        tvLeft6,
-        tvLeft7,
-        tvLeft8,
-        tvLeft9
-    )
+    private lateinit var remainingView :Array<TextView>
 
     lateinit var viewCellTable: Array<Array<View>>
     private lateinit var tableType: TableType
@@ -171,6 +163,17 @@ class CreateTableActivity : AppCompatActivity() {
                 section9.full_cell_9
             )
         )
+        remainingView= arrayOf(
+            tvLeft1,
+            tvLeft2,
+            tvLeft3,
+            tvLeft4,
+            tvLeft5,
+            tvLeft6,
+            tvLeft7,
+            tvLeft8,
+            tvLeft9
+        )
 
         initializeTableCellsListeners()
         buttonsInitialize()
@@ -181,7 +184,7 @@ class CreateTableActivity : AppCompatActivity() {
         viewModel.currentTable.observe(this) { table ->
             viewCellTable.forEachCellIndexed { rowIndex, columnIndex, cellView ->
                 val cellData = table.cells[rowIndex, columnIndex]
-                //TODO displayCellData(cellView, cellData)
+                displayCellData(cellView, cellData)
 
 
                 when {
@@ -213,12 +216,57 @@ class CreateTableActivity : AppCompatActivity() {
             }
         }
     }
+    private fun displayCellData(cellView: View, cellData: Cell) {
+        when {
+            cellData.chosenNumber == 0 -> {
+                setChosenNumber(cellView, cellData.chosenNumber)
+                cellData.shownPossibilities.forEachIndexed { tipNumberIndex, isTipNumberShown ->
+                    changeCellTip(cellView, tipNumberIndex, isTipNumberShown)
+                }
+            }
+            cellData.isChosenNumberCorrect() -> {
+                cellView.cell_number.setTextColor(
+                    if (cellData.given) Color.BLUE else Color.BLACK
+                )
+                setChosenNumber(cellView, cellData.chosenNumber)
+            }
+            else -> {
+                setChosenNumber(cellView, cellData.chosenNumber)
+            }
+        }
+    }
+
+    private fun changeCellTip(cell: View, number: Int, visible: Boolean) {
+        if (cell.cell_number.visibility == View.VISIBLE)
+            return
+
+        val cellTip = cell.tips[number]
+
+        cellTip.visibility =
+            if (visible) View.VISIBLE
+            else View.INVISIBLE
+    }
 
     private fun countersInitialize() {
         val remaining = viewModel.getRemainingNumbers()
 
         remainingView.forEachIndexed { index, textView ->
             textView.text = remaining[index].toString()
+        }
+    }
+
+    private fun setChosenNumber(cell: View, number: Int) {
+        if (number != 0) cell.cell_number.apply {
+            text = number.toString()
+            visibility = View.VISIBLE
+        }
+        else cell.cell_number.apply {
+            text = "  "
+            visibility = View.INVISIBLE
+        }
+
+        cell.tips.forEach {
+            it.visibility = View.INVISIBLE
         }
     }
 
@@ -317,6 +365,13 @@ class CreateTableActivity : AppCompatActivity() {
 
         btSave.setOnClickListener {
             viewModel.saveTable()
+        }
+        btGiven.setOnClickListener{
+
+            if(viewModel.changeGiven())
+            it.setBackgroundColor(resources.getColor(R.color.purple_200))
+            else
+                it.setBackgroundColor(resources.getColor(R.color.light_lime))
         }
     }
 

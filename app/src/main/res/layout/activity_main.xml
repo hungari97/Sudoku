@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/section3"
         app:layout_constraintEnd_toEndOf="@+id/section3"
-        app:srcCompat="@android:drawable/btn_star" />
+        app:srcCompat="@android:drawable/ic_media_pause" />
 
     <include
         android:id="@+id/section1"

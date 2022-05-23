@@ -43,6 +43,7 @@ sealed class Table(
                     cell.isChosenNumberCorrect()
                 )
             }
+
         }
     }
 

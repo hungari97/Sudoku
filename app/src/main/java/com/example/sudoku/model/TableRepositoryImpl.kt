@@ -23,7 +23,7 @@ class TableRepositoryImpl(private val data: ModelData) : TableRepository {
     }
 
     override fun getBlankTable(mode: TableType): Table {
-        TODO("Not yet implemented")
+        return data.getClearTable(mode)
     }
 
     override fun clearGameState() {

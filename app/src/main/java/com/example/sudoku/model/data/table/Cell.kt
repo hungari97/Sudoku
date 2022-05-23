@@ -25,7 +25,7 @@ class Cell(
     }
 
     fun isChosenNumberCorrect(): Boolean {
-        return chosenNumber == solutionNumber
+        return chosenNumber == solutionNumber && chosenNumber !=0
     }
 
     fun writeAnswer(answer: Int) {

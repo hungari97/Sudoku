@@ -15,7 +15,7 @@ import com.example.sudoku.database.entity.TableState
 
 @Database(
     entities = [TableItem::class, GameState::class, TableState::class, CellState::class],
-    version = 1
+    version = 2
 )
 abstract class AppDatabase : RoomDatabase() {
 

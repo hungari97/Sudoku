@@ -145,5 +145,36 @@ class ModelData {
         DBConnector.deleteGameState()
     }
 
+    fun getClearTable(mode: TableType): Table {
+        return when (mode) {
+            TableType.NORMAL -> {
+                NormalTable(
+                    solutionArray = IntArray(81) { 0 },
+                    givenNumbers = BooleanArray(81) { false })
+            }
+            TableType.DIAGONAL ->{
+                DiagonalTable(
+
+                    solutionArray = IntArray(81) { 0 },
+                    givenNumbers = BooleanArray(81) { false }
+                )
+            }
+            TableType.ODD_EVEN ->{
+                OddEvenTable(
+                solutionArray = IntArray(81) { 0 },
+                givenNumbers = BooleanArray(81) { false },
+                oddEvenGroup = BooleanArray(81) { false })
+            }
+
+            else -> {
+                    NormalTable(
+                        solutionArray = IntArray(81) { 0 },
+                        givenNumbers = BooleanArray(81) { false })
+
+            }
+        }
+
+    }
+
 }
 

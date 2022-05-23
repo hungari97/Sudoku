@@ -16,6 +16,7 @@ enum class TableType {
                 is NormalTable -> NORMAL
                 is DiagonalTable -> DIAGONAL
                 is OddEvenTable -> ODD_EVEN
+                else -> NORMAL
             }
     }
 }

@@ -103,6 +103,7 @@ class DatabaseRepositoryImpl : DatabaseRepository {
             is NormalTable -> TableType.NORMAL
             is DiagonalTable -> TableType.DIAGONAL
             is OddEvenTable -> TableType.ODD_EVEN
+            else -> TableType.NORMAL
         }.name
 
         val tableItem = TableItem(table.id, type, content)

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.sudoku.model.data.table.Table
 import com.example.sudoku.model.TableRepository
 import com.example.sudoku.model.data.TableType
+import com.example.sudoku.model.data.table.NormalTable
 import com.example.sudoku.utility.forEachCellIndexed
 import com.example.sudoku.utility.get
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +15,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class CreateViewModel(private val tableRepository: TableRepository) : ViewModel() {
-    private var remainingNumbersCounter = intArrayOf(9, 9, 9, 9, 9, 9, 9, 9)
+    private var givenActive = false
+    private var givens = BooleanArray(81) { false }
+    private var remainingNumbersCounter = intArrayOf(9, 9, 9, 9, 9, 9, 9, 9, 9)
     private val tables = MutableLiveData<Table>()
 
     val currentTable: LiveData<Table>
@@ -58,7 +61,11 @@ class CreateViewModel(private val tableRepository: TableRepository) : ViewModel(
     }
 
     fun writeAnswer(index: Pair<Int, Int>, number: Int): Pair<Boolean, Boolean> {
+        if (givenActive) {
+            givens[index.first * 9 + index.second] = !givens[index.first * 9 + index.second]
+        }
         return tables.value!!.writeAnswer(index, number).also { updateTable() }
+
     }
 
     private fun updateTable() {
@@ -67,6 +74,15 @@ class CreateViewModel(private val tableRepository: TableRepository) : ViewModel(
 
     fun saveTable() {
         if (checkTable()) {
+            val solTable = mutableListOf<Int>()
+            tables.value!!.cells.forEachCellIndexed{rowIndex, cellIndex, value ->
+                solTable.add(value.chosenNumber)
+            }
+
+            NormalTable(
+                givenNumbers = givens,
+                solutionArray = solTable.toIntArray()
+            )
             CoroutineScope(Dispatchers.IO).launch {
                 tableRepository.createTable(tables.value!!)
             }
@@ -121,5 +137,10 @@ class CreateViewModel(private val tableRepository: TableRepository) : ViewModel(
         CoroutineScope(Dispatchers.IO).launch { setTable(tableRepository.getBlankTable(mode)) }
 
     private fun setTable(table: Table) = viewModelScope.launch { tables.value = table }
+
+    fun changeGiven() :Boolean{
+        givenActive = !givenActive
+        return givenActive
+    }
 }
 
